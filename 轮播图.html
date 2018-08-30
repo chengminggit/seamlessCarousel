@@ -1,0 +1,250 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset='utf-8'>
+    <title> 运动版轮播图 </title>
+    <meta name='keywords' content=''>
+    <meta name='description' content=''>
+    <style>
+        * { margin: 0;padding: 0; list-style:none;}
+        #box{
+            position:relative;
+            width:336px;
+            height:210px;
+            margin:50px auto;
+            border:1px solid #ccc;
+            overflow:hidden;
+        }
+        #box #img{
+            position:absolute;
+            left:-336px;
+            top:0;
+            width:1000%;
+            height:210px;
+        }
+        #box #img img{
+            float:left;
+            width:336px;
+            height:210px;
+        }
+        #box .button{
+            position:absolute;
+            top:50%;
+            margin-top:-15px;
+            padding:5px;
+            width:10px;
+            height:20px;
+            background-color:rgba(233,233,233,.5);
+            color:#fff;
+            cursor:pointer;
+        }
+        #box .button.next{
+            right:0;
+        }
+        #box ul{
+            position:absolute;
+            left:50%;
+            bottom:10px;
+            margin-left:-64px;
+            padding:5px 0;
+            border-radius:10px;
+            background-color:rgba(119,163,205,.5);
+        }
+        #box ul li{
+            margin:0 3px;
+            width:10px;
+            height:10px;
+            float:left;
+            border-radius:50%;
+            background-color:rgba(173,185,212,.5);
+            cursor:pointer;
+        }
+        #box ul li.hover{
+            background-color: #f90;
+        }
+    </style>
+</head>
+<body>
+    <div id="box">
+        <div id="img">
+            <img src="images/1%20(8).jpg" alt="">
+            <img src="images/1%20(1).jpg" alt="">
+            <img src="images/1%20(2).jpg" alt="">
+            <img src="images/1%20(3).jpg" alt="">
+            <img src="images/1%20(4).jpg" alt="">
+            <img src="images/1%20(5).jpg" alt="">
+            <img src="images/1%20(6).jpg" alt="">
+            <img src="images/1%20(7).jpg" alt="">
+            <img src="images/1%20(8).jpg" alt="">
+            <img src="images/1%20(1).jpg" alt="">
+        </div>
+        <div class="button pre"> < </div>
+        <div class="button next"> > </div>
+        <ul>
+            <li class="hover"></li>
+            <li></li>
+            <li></li>
+            <li></li>
+            <li></li>
+            <li></li>
+            <li></li>
+            <li></li>
+        </ul>
+    </div>
+
+</body>
+<script src="tween.js"></script>
+<script>
+    var oButton = document.querySelectorAll(".button"),
+        oImg = document.querySelector("#img"),
+        oLi = document.querySelectorAll("li"),
+        index = 1,
+        flag = false;
+
+    for(var j = 0; j<2; j++){
+        oButton[j].seq = j;
+        oButton[j].onclick = function () {
+            var seq = this.seq;
+            if(seq){
+                index++;
+            }else{
+                index--;
+            }
+            play();
+        }
+    }
+    function play() {
+        if(index>=0 && index <=9){
+            animetion(oImg,{
+                left:(-336*index)
+            },{
+                time : 600,
+                type : "Bounce",//规定运动曲线
+                typeAction : "easeOut"//曲线类型
+            });
+            li();
+        }
+
+    }
+
+    function li() {
+        for(var i = 0; i<oLi.length; i++){
+            oLi[i].className = "";
+        }
+        if((index-1) >=0 && (index-1) <=7){
+            oLi[index-1].className = "hover";
+        }else if(index-1 == -1){
+            oLi[7].className = "hover";
+        }else{
+            oLi[0].className = "hover";
+        }
+    }
+
+
+
+    function animetion(ele,attr,action,callback){
+        flag = false;
+
+        //getComputedStyle 有兼容 ie低版本不能使用
+        var startAttr = window.getComputedStyle ? getComputedStyle(ele) : ele.currentStyle,//返回都是一个json对象
+            start = {},//初识位置
+            change = {},//差值 需要走的路程
+            startTime = new Date();//开始时间
+
+
+        //运动曲线函数
+        var actinoFn = Tween.Linear;
+
+        //是否指定类型
+        if(action.type && Tween[action.type][action.typeAction]){
+
+            actinoFn = Tween[action.type][action.typeAction];
+            // console.log(actinoFn);
+        }else if(action.type){
+            actinoFn = Tween[action.type]["easeIn"];
+            // console.log(actinoFn);
+        }else{
+            actinoFn = Tween.Linear;
+        }
+
+        //json对象的遍历
+        for(var key in attr){
+
+            //初识值
+            var startVal = changeNum(startAttr[key]),
+                changeVal = changeNum(attr[key]);
+
+            //如果相等就不改变,只把需要改变的添加进来
+            if(changeVal !== startVal){
+
+                start[key] = startVal;//初识值
+                change[key] = changeVal - startVal;//差值
+            }
+        }
+
+        //动画执行
+        fn();
+        function fn(){
+
+            //时间差值
+            var now = new Date() - startTime;
+
+            //时间差值是不稳定的,要与目标时间对比
+            now = Math.min(now , action.time);
+
+            //for in 就是json对象的遍历和for组合使用就是循环对象
+            //使用遍历来设置样式
+            for(var key in change){
+
+                // marginLeft =>  margin + Left
+                var emAttr = ['width','height','left','top','bottom','right'],
+                    em = "";
+
+                //test是正则的匹配方法如果存在返回true 不存在返回false
+                if(new RegExp(key,'i').test(emAttr+"")){
+
+                    em = "px";
+                }
+
+                //匀速
+                //ele.style[key] = start[key] + change[key] * now / time + em;
+
+
+
+
+                //匀加速
+                ele.style[key] = actinoFn(now,start[key],change[key],action.time) + em;
+
+
+            }
+
+            //时间差值等于 目标时间 ,动画结束
+            if(now === action.time){
+
+                //执行回调函数
+                callback && callback.call(ele);
+                flag = true;
+                if(index>=9 && flag){
+                    index = 1;
+                    oImg.style.left = -336*index + "px";
+                }
+                if(index<=0 && flag){
+                    index = 8;
+                    oImg.style.left = -336*index +"px";
+                }
+            }else{
+
+                //下一次浏览器重绘的时候再执行
+                requestAnimationFrame(fn);
+            }
+
+        };
+
+    }
+
+    //转化为数字
+    function changeNum(n){
+        return parseFloat(n) || 0;
+    }
+</script>
+</html>
